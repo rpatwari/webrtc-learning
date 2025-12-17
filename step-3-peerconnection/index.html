@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Step 3 - RTCPeerConnection (Local)</title>
+</head>
+<body>
+  <h2>Local Peer</h2>
+  <video id="localVideo" autoplay muted playsinline></video>
+
+  <h2>Remote Peer</h2>
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <br>
+  <button id="start">Start Camera</button>
+  <button id="connect">Connect Peers</button>
+
+  <script>
+    const localVideo = document.getElementById("localVideo");
+    const remoteVideo = document.getElementById("remoteVideo");
+
+    let localStream;
+    let pc1, pc2;
+
+    async function startCamera() {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      });
+      localVideo.srcObject = localStream;
+      console.log("Camera started");
+    }
+
+    async function connectPeers() {
+      pc1 = new RTCPeerConnection();
+      pc2 = new RTCPeerConnection();
+
+      // ICE exchange
+      pc1.onicecandidate = e => e.candidate && pc2.addIceCandidate(e.candidate);
+      pc2.onicecandidate = e => e.candidate && pc1.addIceCandidate(e.candidate);
+
+      // Remote stream handler
+      pc2.ontrack = e => {
+        remoteVideo.srcObject = e.streams[0];
+      };
+
+      // Send tracks from pc1 to pc2
+      localStream.getTracks().forEach(track =>
+        pc1.addTrack(track, localStream)
+      );
+
+      // Offer / Answer flow
+      const offer = await pc1.createOffer();
+      await pc1.setLocalDescription(offer);
+      await pc2.setRemoteDescription(offer);
+
+      const answer = await pc2.createAnswer();
+      await pc2.setLocalDescription(answer);
+      await pc1.setRemoteDescription(answer);
+
+      console.log("Peers connected");
+    }
+
+    document.getElementById("start").onclick = startCamera;
+    document.getElementById("connect").onclick = connectPeers;
+  </script>
+</body>
+</html>

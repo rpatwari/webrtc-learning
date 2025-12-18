@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Signaling Test</title>
+</head>
+<body>
+  <h2>WebSocket Test Client</h2>
+
+  <input id="msg" placeholder="Type message">
+  <button onclick="send()">Send</button>
+
+  <pre id="log"></pre>
+
+  <script>
+    const log = m =>
+      document.getElementById("log").textContent += m + "\n";
+
+    const ws = new WebSocket("ws://192.168.1.55:8090");
+
+    ws.onopen = () => log("Connected to signaling server");
+    ws.onmessage = e => log("Received: " + e.data);
+    ws.onerror = () => log("WebSocket error");
+
+    function send() {
+      const msg = document.getElementById("msg").value;
+      ws.send(msg);
+      log("Sent: " + msg);
+    }
+  </script>
+</body>
+</html>
+
